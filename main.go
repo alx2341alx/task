@@ -94,6 +94,7 @@ func check_login(login string,w http.ResponseWriter) bool {
 	//return true
 	_, login_key_found_ := Auth[login]
 	if !login_key_found_ || login == "-1"  {
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("DENIED"))
 		return false
 	} else {
@@ -113,7 +114,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 			if err == nil {			
 				Auth[login] = user.ID
 				Work[login] = user.WorkNumber
-				fmt.Println("id=" + string(user.ID) + "\n")
 			} else {
 				if err.Error() == "record not found" {
 					w.WriteHeader(http.StatusOK)
@@ -174,10 +174,8 @@ func doWork(w http.ResponseWriter, r *http.Request) {
 	login := r.FormValue("login")
 	if (login == "") {
 		w.WriteHeader(http.StatusBadRequest)
-		//fmt.Println("1\n")
 		return
 	} else {
-			w.WriteHeader(http.StatusOK)
 			if !check_login(login,w) {
 				return
 			}
@@ -185,51 +183,44 @@ func doWork(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
-        //fmt.Println("2\n")
 		return
     }
 
-    //fmt.Printf("body=%s\n",string(([]byte(body))[:]))
-    //fmt.Printf("body=%v\n",[]byte(body))
     if &value != nil {
 		err = json.Unmarshal([]byte(body), &value)
+		if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        fmt.Println(err)
+		return
+		}
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
-		//fmt.Println("3\n")
 		return
 	}
 
 	if err != nil {
         w.WriteHeader(http.StatusBadRequest)
-        //fmt.Println("4\n")
 		return
     }
     data := []byte("{")
     w.Header().Set("Content-Type", "application/json")
-    //fmt.Printf("value=%v\n",value)
 	v := reflect.ValueOf(&value).Elem()
 	for i := 0; i < v.NumField(); i++ {
 		field_v := v.Field(i)
 		if field_v.IsValid() {
 			tmp := reverse(field_v)
-			//fmt.Printf("tmp=%v\n",tmp)
 			data = append(data,tmp...)
 			data = append(data,([]byte(","))...)
 		}
-		//fmt.Printf("data=%v\n",data)
 	}
 	data[len(data)-1] = '\x7D'
-	//fmt.Printf("data=%s\n",string(([]byte(data))[:]))
-	//fmt.Printf("data=%v\n",data)
 	w.Write(data)
 }
 
 func reverse(val reflect.Value) []byte {
-	//fmt.Println("reverse")
 	switch val.Kind().String() {
 	case "int64":
 		//fallthrough
-		//fmt.Println("int64")
 		key_ := "\"bigNumber\":"
 		/*
 		key_byte := []byte(key_)
@@ -241,7 +232,6 @@ func reverse(val reflect.Value) []byte {
 		*/
 		return []byte(key_ + strconv.FormatUint(uint64(9223372036854775807-uint64(val.Int())), 10))
 	case "int32":
-		//fmt.Println("int32")
 		key_ := "\"Number\":"
 		/*
 		key_byte := []byte(key_)
@@ -253,7 +243,6 @@ func reverse(val reflect.Value) []byte {
 		*/
 		return []byte(key_ + strconv.FormatUint(uint64(2147483647-uint32(val.Int())), 10))
 	case "string":
-		//fmt.Println("string")
 		key_ := "\"Name\":\""
 		var result string
 		str_tmp := val.String()
