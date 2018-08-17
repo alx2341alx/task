@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"encoding/binary"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -222,25 +221,9 @@ func reverse(val reflect.Value) []byte {
 	case "int64":
 		//fallthrough
 		key_ := "\"bigNumber\":"
-		/*
-		key_byte := []byte(key_)
-		result := make([]byte, 8)
-		binary.LittleEndian.PutUint64(result, uint64(9223372036854775807-uint64(val.Int())))
-		fmt.Printf("data=%s\n",string(([]byte(result))[:]))
-		result = append(key_byte,result...)
-		return result
-		*/
 		return []byte(key_ + strconv.FormatUint(uint64(9223372036854775807-uint64(val.Int())), 10))
 	case "int32":
 		key_ := "\"Number\":"
-		/*
-		key_byte := []byte(key_)
-		result := make([]byte, 4)
-		binary.LittleEndian.PutUint32(result, uint32(2147483647-uint64(val.Int())))
-		fmt.Printf("data=%s\n",string(([]byte(result))[:]))
-		result = append(key_byte,result...)
-		return result
-		*/
 		return []byte(key_ + strconv.FormatUint(uint64(2147483647-uint32(val.Int())), 10))
 	case "string":
 		key_ := "\"Name\":\""
